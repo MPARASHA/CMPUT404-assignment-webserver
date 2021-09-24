@@ -1,5 +1,5 @@
 #  coding: utf-8 
-import socketserver
+import socketserver, os
 
 # Copyright 2013 Abram Hindle, Eddie Antonio Santos
 # 
@@ -28,11 +28,56 @@ import socketserver
 
 
 class MyWebServer(socketserver.BaseRequestHandler):
-    
     def handle(self):
         self.data = self.request.recv(1024).strip()
-        print ("Got a request of: %s\n" % self.data)
-        self.request.sendall(bytearray("OK",'utf-8'))
+        # print ("Got a request of: %s\n" % self.data, flush=True)
+        data_decoded = self.data.decode('utf-8')
+        # print("All data: ", data_decoded)
+
+        request = data_decoded.split('\r\n')[0]
+        # print("\nrequest: ", request)
+
+        request_data = request.split(' ')
+
+        method = request_data[0]
+        # print("\nmethod: ", method)
+
+        URI = request_data[1]
+        # print("\nURI: ",URI)
+
+        # only support get requests
+        if(method== "GET"):
+            if "css" not in URI:
+                if "index.html" not in URI:
+                    if(URI[-1] == "/"):
+                        URI = URI + "index.html"
+                    else:
+                        # Error code 301
+                        self.request.sendall(bytearray("HTTP/1.1 301 Moved Permanently\r\nLocation:" + URI +'/' +"\r\n\r\n301 Moved Permanently",'utf-8'))
+                        return
+            path = "./www" + URI
+
+        # Error code 405 for methods other than GET
+        else:
+            self.request.sendall(bytearray("HTTP/1.1 405 Method Not Allowed\r\n\r\n405 Method Not Allowed",'utf-8'))
+            return
+
+        # Status 200 Ok
+        if(os.path.exists(path)):
+            file = open(path,'r')
+            data = file.read()
+
+            if ".html" in URI:
+                self.request.sendall(bytearray('HTTP/1.1 200 OK\r\n'+"Content-Type:text/html\r\n"  +"\r\n\r\n"+data,'utf-8'))
+            elif ".css" in URI:
+                self.request.sendall(bytearray('HTTP/1.1 200 OK\r\n'+"Content-Type:text/css\r\n"  +"\r\n\r\n"+data,'utf-8'))
+            
+            return
+        
+        # Error code 404 Not Found!
+        else:
+            self.request.sendall(bytearray("HTTP/1.1 404 Not Found\r\n\r\n404 Not Found",'utf-8'))
+            return
 
 if __name__ == "__main__":
     HOST, PORT = "localhost", 8080
@@ -43,4 +88,5 @@ if __name__ == "__main__":
 
     # Activate the server; this will keep running until you
     # interrupt the program with Ctrl-C
+    print("Starting Server\n")
     server.serve_forever()
