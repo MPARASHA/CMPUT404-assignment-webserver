@@ -59,32 +59,31 @@ class MyWebServer(socketserver.BaseRequestHandler):
                         URI = URI + "index.html"
                     else:
                         # Error code 301
-                        self.request.sendall(bytearray("HTTP/1.1 301 Moved Permanently"+Date+"\r\nLocation:" + URI +'/' + "\r\nContent-Length: 0" + Connection + "\r\nContent-Type:text/html\r\n",'utf-8'))
+                        self.request.sendall(bytearray("HTTP/1.1 301 Moved Permanently"+Date+"\r\nLocation:" + URI +'/' + "\r\nContent-Length: 0" + Connection + "\r\nContent-Type: text/html\r\n",'utf-8'))
                         return
             path = "./www" + URI
 
         # Error code 405 for methods other than GET
         else:
-            self.request.sendall(bytearray("HTTP/1.1 405 Method Not Allowed" + Date + "\r\nContent-Length: 0" + Connection + "\r\nContent-Type:text/html\r\n",'utf-8'))
+            self.request.sendall(bytearray("HTTP/1.1 405 Method Not Allowed" + Date + "\r\nContent-Length: 0" + Connection + "\r\nContent-Type: text/html\r\n",'utf-8'))
             return
 
         # Status 200 Ok
         if(os.path.exists(path)):
             file = open(path,'r')
             data = file.read()
-            
-            size = os.stat(path).st_size 
 
             if ".html" in URI:
-                self.request.sendall(bytearray('HTTP/1.1 200 OK' + Date + "\r\nContent-Length: " + size + Connection + '\r\n'+"Content-Type:text/html\r\n"  +"\r\n\r\n"+data,'utf-8'))
+                self.request.sendall(bytearray('HTTP/1.1 200 OK' + Date + "\r\nContent-Length: " + str(len(data)) + Connection + '\r\n'+"Content-Type: text/html\r\n"  +"\r\n"+data,'utf-8'))
+                # print('HTTP/1.1 200 OK' + Date + "\r\nContent-Length: " + str(len(data)) + Connection + '\r\n'+"Content-Type: text/html\r\n"  +"\r\n"+data)
             elif ".css" in URI:
-                self.request.sendall(bytearray('HTTP/1.1 200 OK' + Date + "\r\nContent-Length: " + size + Connection + '\r\n'+"Content-Type:text/css\r\n"  +"\r\n\r\n"+data,'utf-8'))
+                self.request.sendall(bytearray('HTTP/1.1 200 OK' + Date + "\r\nContent-Length: " + str(len(data)) + Connection + '\r\n'+"Content-Type: text/css\r\n"  +"\r\n"+data,'utf-8'))
             
             return
         
         # Error code 404 Not Found!
         else:
-            self.request.sendall(bytearray("HTTP/1.1 404 Not Found" + Date + "\r\nContent-Length: 0" + Connection + "\r\nContent-Type:text/html\r\n",'utf-8'))
+            self.request.sendall(bytearray("HTTP/1.1 404 Not Found" + Date + "\r\nContent-Length: 0" + Connection + "\r\nContent-Type: text/html\r\n",'utf-8'))
             return
 
 if __name__ == "__main__":
